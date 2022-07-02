@@ -19,6 +19,7 @@ struct Chip8 {
 	~Chip8();
 
 	void loadSprites();
+	void loadROM(const char*);
 };
 
 #endif
