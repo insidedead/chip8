@@ -38,9 +38,6 @@ void Chip8::loadRoam(std::string path)
 
 		for(long i = 0; i < len; ++i)
 		{
-#ifdef DEBUG
-			std::cout << std::bitset<8>(buffer[i]) << std::endl;
-#endif
 			memory[0x200 + i] = buffer[i];
 		}
 
@@ -58,9 +55,6 @@ void Chip8::loadFont()
 
 	for(int i = 0; i < (sizeof(fonts) / sizeof(*fonts)); i++)
 	{
-#ifdef DEBUG
-		std::cout << std::bitset<8>(*(fonts+i)) << std::endl;
-#endif
 		memory[0x000 + i] = *(fonts + i);
 	}
 
@@ -97,48 +91,37 @@ void Chip8::run()
 			stack[SP] = PC;
 			PC = instruction & 0x0FFF;
 		case 3:
+			if(registers[instruction & 0x0F00] == (instruction & 0x00FF)) PC += 2;
+			PC += 2;
 			break;
-		case 15:
-			switch(instruction & 0x00FF)
+		case 4:
+			if(registers[instruction & 0x0F00] != (instruction & 0x00FF)) PC += 2;
+			PC += 2;
+			break;
+		case 5:
+			if(registers[instruction & 0x0F00] == registers[instruction & 0x00F0]) PC += 2;
+			PC += 2;
+			break;
+		case 6:
+			registers[instruction & 0x0F00] = (instruction & 0x00FF);
+			PC += 2;
+			break;
+		case 7:
+			registers[instruction & 0x0F00] = registers[instruction & 0x0F00] + (instruction & 0x00FF);
+			PC += 2;
+			break;
+		case 8:
+			switch(instruction & 0x000F)
 			{
-				case 0x07:
-					std::cout << "hello 0x07";
+				case 0:
+					registers[instruction & 0x0F00] = registers[instruction & 0x00F0];
 					PC += 2;
 					break;
-				case 0x0A:
-					std::cout << "0x0A";
-					PC += 2;
-					break;
-				case 0x15:
-					std::cout << "0x15";
-					PC += 2;
-					break;
-				case 0x18:
-					std::cout << "0x18";
-					PC += 2;
-					break;
-				case 0x1E:
-					std::cout << "0x1e";
-					PC += 2;
-					break;
-				case 0x29:
-					std::cout << "0x29";
-					PC += 2;
-					break;
-				case 0x33:
-					std::cout << "0x33";
-					PC += 2;
-					break;
-				case 0x55:
-					std::cout << "0x55";
-					PC += 2;
-					break;
-				case 0x65:
-					std::cout << "0x65";
+				case 1:
+					registers[instruction & 0x0F00] = registers[instruction & 0x0F00] ^ registers[instruction & 0x00F0];
 					PC += 2;
 					break;
 			}
 			break;
-		break;
 	}
 }
