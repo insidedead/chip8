@@ -12,6 +12,7 @@ struct Chip8 {
 	uint16_t PC;
 	uint8_t SP;
 	uint16_t *stack;
+	uint16_t *diplay;
 	
 	Chip8();
 	~Chip8();

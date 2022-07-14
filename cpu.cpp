@@ -11,6 +11,7 @@ Chip8::Chip8()
 	memory = new uint8_t[4096];
 	registers = new uint8_t[16];
 	stack = new uint16_t[16];
+	diplay = new uint16_t[64 * 32];
 
 	SP = (0x200 & 0xFF);
 }
@@ -73,13 +74,11 @@ void Chip8::run()
 			{
 				case 0x00E0:
 					std::cout << "clear";
-					
 					PC += 2;
 					break;
 				case 0x00EE:
-					std::cout << "return from sr";
-					
-					PC += 2;
+					PC = stack[SP];
+					--SP;
 					break;
 			}
 			break;
@@ -91,37 +90,125 @@ void Chip8::run()
 			stack[SP] = PC;
 			PC = instruction & 0x0FFF;
 		case 3:
-			if(registers[instruction & 0x0F00] == (instruction & 0x00FF)) PC += 2;
+			if(registers[(instruction & 0x0F00) >> 8] == (instruction & 0x00FF)) PC += 2;
 			PC += 2;
 			break;
 		case 4:
-			if(registers[instruction & 0x0F00] != (instruction & 0x00FF)) PC += 2;
+			if(registers[(instruction & 0x0F00) >> 8] != (instruction & 0x00FF)) PC += 2;
 			PC += 2;
 			break;
 		case 5:
-			if(registers[instruction & 0x0F00] == registers[instruction & 0x00F0]) PC += 2;
+			if(registers[(instruction & 0x0F00) >> 8] == registers[(instruction & 0x00F0) >> 4]) PC += 2;
 			PC += 2;
 			break;
 		case 6:
-			registers[instruction & 0x0F00] = (instruction & 0x00FF);
+			registers[(instruction & 0x0F00) >> 4] = (instruction & 0x00FF);
 			PC += 2;
 			break;
 		case 7:
-			registers[instruction & 0x0F00] = registers[instruction & 0x0F00] + (instruction & 0x00FF);
+			registers[(instruction & 0x0F00) >> 8] = registers[(instruction & 0x0F00) >> 8] + (instruction & 0x00FF);
 			PC += 2;
 			break;
 		case 8:
 			switch(instruction & 0x000F)
 			{
 				case 0:
-					registers[instruction & 0x0F00] = registers[instruction & 0x00F0];
+					registers[(instruction & 0x0F00) >> 8] = registers[(instruction & 0x00F0) >> 4];
 					PC += 2;
 					break;
 				case 1:
-					registers[instruction & 0x0F00] = registers[instruction & 0x0F00] ^ registers[instruction & 0x00F0];
+					registers[(instruction & 0x0F00) >> 8] |= registers[(instruction & 0x00F0) >> 4];
+					PC += 2;
+					break;
+				case 2:
+					registers[(instruction & 0x0F00) >> 8] &= registers[(instruction & 0x00F0) >> 4];
+					break;
+				case 3:
+					registers[(instruction & 0x0F00) >> 8] ^= registers[(instruction & 0x00F0) >> 4];
+					break;
+				case 4:
+					registers[0xF] = registers[(instruction & 0x0F00) >> 8] > 255 ? 1 : 0;
+					registers[(instruction & 0x0F00) >> 8] += registers[(instruction & 0x000F0) >> 4];
+					break;
+				case 5:
+					registers[(instruction & 0x0F00) >> 8] -= registers[(instruction & 0x000F0) >> 4];
+					registers[0xF] = registers[(instruction & 0x00F0) >> 4] > registers[(instruction & 0x0F00) >> 8] ? 1 : 0;
+					break;
+				case 6:
+					registers[0xF] = registers[(instruction & 0x0F00) >> 8] & 1 ? 1 : 0;
+					registers[(instruction & 0x0F00) >> 8] /= 2;
+					break;
+				case 7:
+					registers[0xF] = registers[(instruction & 0x00F0) >> 4] > registers[(instruction & 0x0F00) >> 8] ? 1 : 0;
+					registers[(instruction & 0x0F00) >> 8] /= registers[(instruction & 0x00F0) >> 4];
+					break;
+				case 14:
+					registers[0xF] = registers[(instruction & 0x0F00) >> 8] & 1 ? 1 : 0;
+					registers[(instruction & 0x0F00) >> 8] *= 2;
+					break;
+			}
+			break;
+		case 9:
+			PC += registers[(instruction & 0x0F00) >> 8] != registers[(instruction & 0x00F0) >> 4] ? 4 : 2;
+			break;
+		case 10:
+			I = instruction & 0x0FFF; 
+			PC += 2;
+			break;
+		case 11:
+			PC = registers[instruction & 0x0FFF] + registers[0x0];
+			break;
+		case 12:
+#include <cstdlib>
+			uint8_t random;
+			random = rand() % 256;
+			registers[(instruction & 0x0F00) >> 8] = random & (instruction & 0x00FF);
+			break;
+		case 15:
+			switch((instruction & 0xF))
+			{
+				case 7:
+					registers[(instruction & 0x0F00) >> 8] = delayTimer;
+					PC += 2;
+					break;
+				case 10:
+					std::cout << "key press";
+					PC += 2;
+					break;
+				case 5:
+					switch((instruction & 0x00F0) >> 4)
+					{
+						case 1:
+							delayTimer = registers[(instruction & 0x0F00) >> 8];
+							PC += 2;
+							break;
+						case 5:
+							std::cout << "5" << std::endl;
+							PC += 2;
+							break;
+						case 6:
+							std::cout << "6" << std::endl;
+							PC += 2;
+							break;
+					}
+				case 8:
+					soundTimer = registers[(instruction & 0x0F00) >> 8];
+					PC += 2;
+					break;
+				case 14:
+					I += registers[(instruction & 0x0F00) >> 8];
+					PC += 2;
+					break;
+				case 9:
+					PC += 2;
+					break;
+				case 3:
 					PC += 2;
 					break;
 			}
+		default:
+			std::cerr << "wrong code " << std::bitset<16>(instruction) << std::endl;
+			PC += 2;
 			break;
 	}
 }
