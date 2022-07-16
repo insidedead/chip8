@@ -5,15 +5,18 @@
 #include <string>
 #include <iostream>
 #include <bitset>
+#include <cstring>
 
 Chip8::Chip8()
 {
 	memory = new uint8_t[4096];
 	registers = new uint8_t[16];
 	stack = new uint16_t[16];
-	diplay = new uint16_t[64 * 32];
+	display = new uint16_t[64 * 32];
 
 	SP = (0x200 & 0xFF);
+
+	draw = false;
 }
 
 Chip8::~Chip8()
@@ -21,6 +24,7 @@ Chip8::~Chip8()
 	delete [] memory;
 	delete [] registers;
 	delete [] stack;
+	delete [] display;
 }
 
 void Chip8::loadRoam(std::string path)
@@ -73,7 +77,7 @@ void Chip8::run()
 			switch(instruction & 0x0FFF)
 			{
 				case 0x00E0:
-					std::cout << "clear";
+					memset (display, 0, sizeof(display));
 					PC += 2;
 					break;
 				case 0x00EE:
@@ -164,6 +168,13 @@ void Chip8::run()
 			random = rand() % 256;
 			registers[(instruction & 0x0F00) >> 8] = random & (instruction & 0x00FF);
 			break;
+		case 13:
+			draw = true;
+			for(int i = I; I < (instruction & 0x000F); I++)
+			{
+				display[(instruction & 0x0F00) >> 8] = display[(instruction & 0x00F0) >> 4] ^= memory[I];
+			}
+			draw = false;
 		case 15:
 			switch((instruction & 0xF))
 			{
@@ -183,11 +194,17 @@ void Chip8::run()
 							PC += 2;
 							break;
 						case 5:
-							std::cout << "5" << std::endl;
+							for(int i = 0; i < ((instruction & 0x00F00) >> 8); i++)
+							{
+								memory[I + i] = registers[i];
+							}
 							PC += 2;
 							break;
 						case 6:
-							std::cout << "6" << std::endl;
+							for(int i = 0; i < ((instruction & 0x00F00) >> 8); i++)
+							{
+								registers[i] = memory[I + i];
+							}
 							PC += 2;
 							break;
 					}

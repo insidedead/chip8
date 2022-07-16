@@ -12,8 +12,10 @@ struct Chip8 {
 	uint16_t PC;
 	uint8_t SP;
 	uint16_t *stack;
-	uint16_t *diplay;
-	
+	uint16_t *display;
+
+	bool draw;
+
 	Chip8();
 	~Chip8();
 
