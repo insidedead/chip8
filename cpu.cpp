@@ -175,6 +175,7 @@ void Chip8::run()
 				display[(instruction & 0x0F00) >> 8] = display[(instruction & 0x00F0) >> 4] ^= memory[I];
 			}
 			draw = false;
+			break;
 		case 15:
 			switch((instruction & 0xF))
 			{
